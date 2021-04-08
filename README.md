@@ -18,4 +18,4 @@ Go to root of your project and run `go run server/main.go` on your terminal.
 It's done! API is running.
 
 ## Observation
-For this example I use `evans` gRPC client. If you have this client installed, so run `evans -r repl` on your second terminal.
+For this example I used `evans` gRPC client. If you have this client installed, so run `evans -r repl` on your second terminal.
