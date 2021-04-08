@@ -31,7 +31,7 @@ message GetAllCryptoResponse {
 }
 
 message UpdateCryptoRequest {
-  string id = 1;
+  Crypto crypto = 1;
 }
 message UpdateCryptoResponse {
   Crypto crypto = 1;
