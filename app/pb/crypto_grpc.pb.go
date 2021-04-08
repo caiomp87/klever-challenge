@@ -19,12 +19,15 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CryptoServiceClient interface {
 	CreateCrypto(ctx context.Context, in *CreateCryptoRequest, opts ...grpc.CallOption) (*CreateCryptoResponse, error)
-	GetCrypto(ctx context.Context, in *GetCryptoRequest, opts ...grpc.CallOption) (*GetCryptoResponse, error)
-	GetAllCrypto(ctx context.Context, in *GetAllCryptoRequest, opts ...grpc.CallOption) (CryptoService_GetAllCryptoClient, error)
+	ReadCrypto(ctx context.Context, in *ReadCryptoRequest, opts ...grpc.CallOption) (*ReadCryptoResponse, error)
+	ListCryptos(ctx context.Context, in *ListCryptosRequest, opts ...grpc.CallOption) (CryptoService_ListCryptosClient, error)
 	UpdateCrypto(ctx context.Context, in *UpdateCryptoRequest, opts ...grpc.CallOption) (*UpdateCryptoResponse, error)
 	DeleteCrypto(ctx context.Context, in *DeleteCryptoRequest, opts ...grpc.CallOption) (*DeleteCryptoResponse, error)
 	AddLike(ctx context.Context, in *AddLikeRequest, opts ...grpc.CallOption) (*AddLikeResponse, error)
+	RemoveLike(ctx context.Context, in *RemoveLikeRequest, opts ...grpc.CallOption) (*RemoveLikeResponse, error)
 	AddDislike(ctx context.Context, in *AddDislikeRequest, opts ...grpc.CallOption) (*AddDislikeResponse, error)
+	RemoveDislike(ctx context.Context, in *RemoveDislikeRequest, opts ...grpc.CallOption) (*RemoveDislikeResponse, error)
+	CountVotes(ctx context.Context, in *CountVotesRequest, opts ...grpc.CallOption) (*CountVotesResponse, error)
 }
 
 type cryptoServiceClient struct {
@@ -44,21 +47,21 @@ func (c *cryptoServiceClient) CreateCrypto(ctx context.Context, in *CreateCrypto
 	return out, nil
 }
 
-func (c *cryptoServiceClient) GetCrypto(ctx context.Context, in *GetCryptoRequest, opts ...grpc.CallOption) (*GetCryptoResponse, error) {
-	out := new(GetCryptoResponse)
-	err := c.cc.Invoke(ctx, "/crypto.CryptoService/GetCrypto", in, out, opts...)
+func (c *cryptoServiceClient) ReadCrypto(ctx context.Context, in *ReadCryptoRequest, opts ...grpc.CallOption) (*ReadCryptoResponse, error) {
+	out := new(ReadCryptoResponse)
+	err := c.cc.Invoke(ctx, "/crypto.CryptoService/ReadCrypto", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *cryptoServiceClient) GetAllCrypto(ctx context.Context, in *GetAllCryptoRequest, opts ...grpc.CallOption) (CryptoService_GetAllCryptoClient, error) {
-	stream, err := c.cc.NewStream(ctx, &CryptoService_ServiceDesc.Streams[0], "/crypto.CryptoService/GetAllCrypto", opts...)
+func (c *cryptoServiceClient) ListCryptos(ctx context.Context, in *ListCryptosRequest, opts ...grpc.CallOption) (CryptoService_ListCryptosClient, error) {
+	stream, err := c.cc.NewStream(ctx, &CryptoService_ServiceDesc.Streams[0], "/crypto.CryptoService/ListCryptos", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &cryptoServiceGetAllCryptoClient{stream}
+	x := &cryptoServiceListCryptosClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -68,17 +71,17 @@ func (c *cryptoServiceClient) GetAllCrypto(ctx context.Context, in *GetAllCrypto
 	return x, nil
 }
 
-type CryptoService_GetAllCryptoClient interface {
-	Recv() (*GetAllCryptoResponse, error)
+type CryptoService_ListCryptosClient interface {
+	Recv() (*ListCryptosResponse, error)
 	grpc.ClientStream
 }
 
-type cryptoServiceGetAllCryptoClient struct {
+type cryptoServiceListCryptosClient struct {
 	grpc.ClientStream
 }
 
-func (x *cryptoServiceGetAllCryptoClient) Recv() (*GetAllCryptoResponse, error) {
-	m := new(GetAllCryptoResponse)
+func (x *cryptoServiceListCryptosClient) Recv() (*ListCryptosResponse, error) {
+	m := new(ListCryptosResponse)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -112,9 +115,36 @@ func (c *cryptoServiceClient) AddLike(ctx context.Context, in *AddLikeRequest, o
 	return out, nil
 }
 
+func (c *cryptoServiceClient) RemoveLike(ctx context.Context, in *RemoveLikeRequest, opts ...grpc.CallOption) (*RemoveLikeResponse, error) {
+	out := new(RemoveLikeResponse)
+	err := c.cc.Invoke(ctx, "/crypto.CryptoService/RemoveLike", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *cryptoServiceClient) AddDislike(ctx context.Context, in *AddDislikeRequest, opts ...grpc.CallOption) (*AddDislikeResponse, error) {
 	out := new(AddDislikeResponse)
 	err := c.cc.Invoke(ctx, "/crypto.CryptoService/AddDislike", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *cryptoServiceClient) RemoveDislike(ctx context.Context, in *RemoveDislikeRequest, opts ...grpc.CallOption) (*RemoveDislikeResponse, error) {
+	out := new(RemoveDislikeResponse)
+	err := c.cc.Invoke(ctx, "/crypto.CryptoService/RemoveDislike", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *cryptoServiceClient) CountVotes(ctx context.Context, in *CountVotesRequest, opts ...grpc.CallOption) (*CountVotesResponse, error) {
+	out := new(CountVotesResponse)
+	err := c.cc.Invoke(ctx, "/crypto.CryptoService/CountVotes", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -126,13 +156,16 @@ func (c *cryptoServiceClient) AddDislike(ctx context.Context, in *AddDislikeRequ
 // for forward compatibility
 type CryptoServiceServer interface {
 	CreateCrypto(context.Context, *CreateCryptoRequest) (*CreateCryptoResponse, error)
-	GetCrypto(context.Context, *GetCryptoRequest) (*GetCryptoResponse, error)
-	GetAllCrypto(*GetAllCryptoRequest, CryptoService_GetAllCryptoServer) error
+	ReadCrypto(context.Context, *ReadCryptoRequest) (*ReadCryptoResponse, error)
+	ListCryptos(*ListCryptosRequest, CryptoService_ListCryptosServer) error
 	UpdateCrypto(context.Context, *UpdateCryptoRequest) (*UpdateCryptoResponse, error)
 	DeleteCrypto(context.Context, *DeleteCryptoRequest) (*DeleteCryptoResponse, error)
 	AddLike(context.Context, *AddLikeRequest) (*AddLikeResponse, error)
+	RemoveLike(context.Context, *RemoveLikeRequest) (*RemoveLikeResponse, error)
 	AddDislike(context.Context, *AddDislikeRequest) (*AddDislikeResponse, error)
-	mustEmbedUnimplementedCryptoServiceServer()
+	RemoveDislike(context.Context, *RemoveDislikeRequest) (*RemoveDislikeResponse, error)
+	CountVotes(context.Context, *CountVotesRequest) (*CountVotesResponse, error)
+	// mustEmbedUnimplementedCryptoServiceServer()
 }
 
 // UnimplementedCryptoServiceServer must be embedded to have forward compatible implementations.
@@ -142,11 +175,11 @@ type UnimplementedCryptoServiceServer struct {
 func (UnimplementedCryptoServiceServer) CreateCrypto(context.Context, *CreateCryptoRequest) (*CreateCryptoResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateCrypto not implemented")
 }
-func (UnimplementedCryptoServiceServer) GetCrypto(context.Context, *GetCryptoRequest) (*GetCryptoResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetCrypto not implemented")
+func (UnimplementedCryptoServiceServer) ReadCrypto(context.Context, *ReadCryptoRequest) (*ReadCryptoResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReadCrypto not implemented")
 }
-func (UnimplementedCryptoServiceServer) GetAllCrypto(*GetAllCryptoRequest, CryptoService_GetAllCryptoServer) error {
-	return status.Errorf(codes.Unimplemented, "method GetAllCrypto not implemented")
+func (UnimplementedCryptoServiceServer) ListCryptos(*ListCryptosRequest, CryptoService_ListCryptosServer) error {
+	return status.Errorf(codes.Unimplemented, "method ListCryptos not implemented")
 }
 func (UnimplementedCryptoServiceServer) UpdateCrypto(context.Context, *UpdateCryptoRequest) (*UpdateCryptoResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateCrypto not implemented")
@@ -157,8 +190,17 @@ func (UnimplementedCryptoServiceServer) DeleteCrypto(context.Context, *DeleteCry
 func (UnimplementedCryptoServiceServer) AddLike(context.Context, *AddLikeRequest) (*AddLikeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddLike not implemented")
 }
+func (UnimplementedCryptoServiceServer) RemoveLike(context.Context, *RemoveLikeRequest) (*RemoveLikeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveLike not implemented")
+}
 func (UnimplementedCryptoServiceServer) AddDislike(context.Context, *AddDislikeRequest) (*AddDislikeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddDislike not implemented")
+}
+func (UnimplementedCryptoServiceServer) RemoveDislike(context.Context, *RemoveDislikeRequest) (*RemoveDislikeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveDislike not implemented")
+}
+func (UnimplementedCryptoServiceServer) CountVotes(context.Context, *CountVotesRequest) (*CountVotesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CountVotes not implemented")
 }
 func (UnimplementedCryptoServiceServer) mustEmbedUnimplementedCryptoServiceServer() {}
 
@@ -191,42 +233,42 @@ func _CryptoService_CreateCrypto_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
-func _CryptoService_GetCrypto_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetCryptoRequest)
+func _CryptoService_ReadCrypto_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReadCryptoRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CryptoServiceServer).GetCrypto(ctx, in)
+		return srv.(CryptoServiceServer).ReadCrypto(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/crypto.CryptoService/GetCrypto",
+		FullMethod: "/crypto.CryptoService/ReadCrypto",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CryptoServiceServer).GetCrypto(ctx, req.(*GetCryptoRequest))
+		return srv.(CryptoServiceServer).ReadCrypto(ctx, req.(*ReadCryptoRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _CryptoService_GetAllCrypto_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(GetAllCryptoRequest)
+func _CryptoService_ListCryptos_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(ListCryptosRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(CryptoServiceServer).GetAllCrypto(m, &cryptoServiceGetAllCryptoServer{stream})
+	return srv.(CryptoServiceServer).ListCryptos(m, &cryptoServiceListCryptosServer{stream})
 }
 
-type CryptoService_GetAllCryptoServer interface {
-	Send(*GetAllCryptoResponse) error
+type CryptoService_ListCryptosServer interface {
+	Send(*ListCryptosResponse) error
 	grpc.ServerStream
 }
 
-type cryptoServiceGetAllCryptoServer struct {
+type cryptoServiceListCryptosServer struct {
 	grpc.ServerStream
 }
 
-func (x *cryptoServiceGetAllCryptoServer) Send(m *GetAllCryptoResponse) error {
+func (x *cryptoServiceListCryptosServer) Send(m *ListCryptosResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
@@ -284,6 +326,24 @@ func _CryptoService_AddLike_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CryptoService_RemoveLike_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveLikeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CryptoServiceServer).RemoveLike(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/crypto.CryptoService/RemoveLike",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CryptoServiceServer).RemoveLike(ctx, req.(*RemoveLikeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _CryptoService_AddDislike_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AddDislikeRequest)
 	if err := dec(in); err != nil {
@@ -302,6 +362,42 @@ func _CryptoService_AddDislike_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CryptoService_RemoveDislike_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveDislikeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CryptoServiceServer).RemoveDislike(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/crypto.CryptoService/RemoveDislike",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CryptoServiceServer).RemoveDislike(ctx, req.(*RemoveDislikeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CryptoService_CountVotes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CountVotesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CryptoServiceServer).CountVotes(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/crypto.CryptoService/CountVotes",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CryptoServiceServer).CountVotes(ctx, req.(*CountVotesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CryptoService_ServiceDesc is the grpc.ServiceDesc for CryptoService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -314,8 +410,8 @@ var CryptoService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _CryptoService_CreateCrypto_Handler,
 		},
 		{
-			MethodName: "GetCrypto",
-			Handler:    _CryptoService_GetCrypto_Handler,
+			MethodName: "ReadCrypto",
+			Handler:    _CryptoService_ReadCrypto_Handler,
 		},
 		{
 			MethodName: "UpdateCrypto",
@@ -330,14 +426,26 @@ var CryptoService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _CryptoService_AddLike_Handler,
 		},
 		{
+			MethodName: "RemoveLike",
+			Handler:    _CryptoService_RemoveLike_Handler,
+		},
+		{
 			MethodName: "AddDislike",
 			Handler:    _CryptoService_AddDislike_Handler,
+		},
+		{
+			MethodName: "RemoveDislike",
+			Handler:    _CryptoService_RemoveDislike_Handler,
+		},
+		{
+			MethodName: "CountVotes",
+			Handler:    _CryptoService_CountVotes_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "GetAllCrypto",
-			Handler:       _CryptoService_GetAllCrypto_Handler,
+			StreamName:    "ListCryptos",
+			Handler:       _CryptoService_ListCryptos_Handler,
 			ServerStreams: true,
 		},
 	},

@@ -4,37 +4,54 @@ package crypto;
 
 option go_package = "app/pb";
 
+service CryptoService {
+  rpc CreateCrypto(CreateCryptoRequest) returns (CreateCryptoResponse);
+  rpc ReadCrypto(ReadCryptoRequest) returns (ReadCryptoResponse);
+  rpc ListCryptos(ListCryptosRequest) returns (stream ListCryptosResponse);
+  rpc UpdateCrypto(UpdateCryptoRequest) returns (UpdateCryptoResponse);
+  rpc DeleteCrypto(DeleteCryptoRequest) returns (DeleteCryptoResponse);
+  rpc AddLike(AddLikeRequest) returns (AddLikeResponse);
+  rpc RemoveLike(RemoveLikeRequest) returns (RemoveLikeResponse);
+  rpc AddDislike(AddDislikeRequest) returns (AddDislikeResponse);
+  rpc RemoveDislike(RemoveDislikeRequest) returns (RemoveDislikeResponse);
+  rpc CountVotes(CountVotesRequest) returns (CountVotesResponse);
+}
+
 message Crypto {
   string id = 1;
   string name = 2;
-  int64 likes = 3;
-  int64 dislikes = 4;
+  string description = 3;
+  string likes = 4;
+  string dislikes = 5;
 }
 
 message CreateCryptoRequest {
-  Crypto crypto = 1;
+  string name = 1;
+  string description = 2;
 }
 message CreateCryptoResponse {
-  Crypto crypto = 1;
+  bool success = 1;
 }
 
-message GetCryptoRequest {
+message ListCryptosRequest {}
+message ListCryptosResponse {
+    Crypto crypto = 1;
+}
+
+message ReadCryptoRequest {
   string id = 1;
 }
-message GetCryptoResponse {
-  Crypto crypto = 1;
-}
-
-message GetAllCryptoRequest {}
-message GetAllCryptoResponse {
+message ReadCryptoResponse {
   Crypto crypto = 1;
 }
 
 message UpdateCryptoRequest {
-  Crypto crypto = 1;
+  string id = 1;
+  string name = 2;
+  string description = 3;
 }
 message UpdateCryptoResponse {
-  Crypto crypto = 1;
+  bool success = 1;
 }
 
 message DeleteCryptoRequest {
@@ -51,6 +68,13 @@ message AddLikeResponse {
   Crypto crypto = 1;
 }
 
+message RemoveLikeRequest {
+  string id = 1;
+}
+message RemoveLikeResponse {
+  Crypto crypto = 1;
+}
+
 message AddDislikeRequest {
   string id = 1;
 }
@@ -58,12 +82,17 @@ message AddDislikeResponse {
   Crypto crypto = 1;
 }
 
-service CryptoService {
-  rpc CreateCrypto(CreateCryptoRequest) returns (CreateCryptoResponse);
-  rpc GetCrypto(GetCryptoRequest) returns (GetCryptoResponse);
-  rpc GetAllCrypto(GetAllCryptoRequest) returns (stream GetAllCryptoResponse);
-  rpc UpdateCrypto(UpdateCryptoRequest) returns (UpdateCryptoResponse);
-  rpc DeleteCrypto(DeleteCryptoRequest) returns (DeleteCryptoResponse);
-  rpc AddLike(AddLikeRequest) returns (AddLikeResponse);
-  rpc AddDislike(AddDislikeRequest) returns (AddDislikeResponse);
+message RemoveDislikeRequest {
+  string id = 1;
+}
+message RemoveDislikeResponse {
+  Crypto crypto = 1;
+}
+
+message CountVotesRequest {
+  string id = 1;
+}
+message CountVotesResponse {
+  string name = 1;
+  string total = 2;
 }
