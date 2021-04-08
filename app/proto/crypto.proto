@@ -61,7 +61,7 @@ message AddDislikeResponse {
 service CryptoService {
   rpc CreateCrypto(CreateCryptoRequest) returns (CreateCryptoResponse);
   rpc GetCrypto(GetCryptoRequest) returns (GetCryptoResponse);
-  rpc GetAllCrypto(GetAllCryptoRequest) returns (GetAllCryptoResponse);
+  rpc GetAllCrypto(GetAllCryptoRequest) returns (stream GetAllCryptoResponse);
   rpc UpdateCrypto(UpdateCryptoRequest) returns (UpdateCryptoResponse);
   rpc DeleteCrypto(DeleteCryptoRequest) returns (DeleteCryptoResponse);
   rpc AddLike(AddLikeRequest) returns (AddLikeResponse);

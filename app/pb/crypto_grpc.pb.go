@@ -20,7 +20,7 @@ const _ = grpc.SupportPackageIsVersion7
 type CryptoServiceClient interface {
 	CreateCrypto(ctx context.Context, in *CreateCryptoRequest, opts ...grpc.CallOption) (*CreateCryptoResponse, error)
 	GetCrypto(ctx context.Context, in *GetCryptoRequest, opts ...grpc.CallOption) (*GetCryptoResponse, error)
-	GetAllCrypto(ctx context.Context, in *GetAllCryptoRequest, opts ...grpc.CallOption) (*GetAllCryptoResponse, error)
+	GetAllCrypto(ctx context.Context, in *GetAllCryptoRequest, opts ...grpc.CallOption) (CryptoService_GetAllCryptoClient, error)
 	UpdateCrypto(ctx context.Context, in *UpdateCryptoRequest, opts ...grpc.CallOption) (*UpdateCryptoResponse, error)
 	DeleteCrypto(ctx context.Context, in *DeleteCryptoRequest, opts ...grpc.CallOption) (*DeleteCryptoResponse, error)
 	AddLike(ctx context.Context, in *AddLikeRequest, opts ...grpc.CallOption) (*AddLikeResponse, error)
@@ -53,13 +53,36 @@ func (c *cryptoServiceClient) GetCrypto(ctx context.Context, in *GetCryptoReques
 	return out, nil
 }
 
-func (c *cryptoServiceClient) GetAllCrypto(ctx context.Context, in *GetAllCryptoRequest, opts ...grpc.CallOption) (*GetAllCryptoResponse, error) {
-	out := new(GetAllCryptoResponse)
-	err := c.cc.Invoke(ctx, "/crypto.CryptoService/GetAllCrypto", in, out, opts...)
+func (c *cryptoServiceClient) GetAllCrypto(ctx context.Context, in *GetAllCryptoRequest, opts ...grpc.CallOption) (CryptoService_GetAllCryptoClient, error) {
+	stream, err := c.cc.NewStream(ctx, &CryptoService_ServiceDesc.Streams[0], "/crypto.CryptoService/GetAllCrypto", opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &cryptoServiceGetAllCryptoClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type CryptoService_GetAllCryptoClient interface {
+	Recv() (*GetAllCryptoResponse, error)
+	grpc.ClientStream
+}
+
+type cryptoServiceGetAllCryptoClient struct {
+	grpc.ClientStream
+}
+
+func (x *cryptoServiceGetAllCryptoClient) Recv() (*GetAllCryptoResponse, error) {
+	m := new(GetAllCryptoResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 func (c *cryptoServiceClient) UpdateCrypto(ctx context.Context, in *UpdateCryptoRequest, opts ...grpc.CallOption) (*UpdateCryptoResponse, error) {
@@ -104,7 +127,7 @@ func (c *cryptoServiceClient) AddDislike(ctx context.Context, in *AddDislikeRequ
 type CryptoServiceServer interface {
 	CreateCrypto(context.Context, *CreateCryptoRequest) (*CreateCryptoResponse, error)
 	GetCrypto(context.Context, *GetCryptoRequest) (*GetCryptoResponse, error)
-	GetAllCrypto(context.Context, *GetAllCryptoRequest) (*GetAllCryptoResponse, error)
+	GetAllCrypto(*GetAllCryptoRequest, CryptoService_GetAllCryptoServer) error
 	UpdateCrypto(context.Context, *UpdateCryptoRequest) (*UpdateCryptoResponse, error)
 	DeleteCrypto(context.Context, *DeleteCryptoRequest) (*DeleteCryptoResponse, error)
 	AddLike(context.Context, *AddLikeRequest) (*AddLikeResponse, error)
@@ -122,8 +145,8 @@ func (UnimplementedCryptoServiceServer) CreateCrypto(context.Context, *CreateCry
 func (UnimplementedCryptoServiceServer) GetCrypto(context.Context, *GetCryptoRequest) (*GetCryptoResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetCrypto not implemented")
 }
-func (UnimplementedCryptoServiceServer) GetAllCrypto(context.Context, *GetAllCryptoRequest) (*GetAllCryptoResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetAllCrypto not implemented")
+func (UnimplementedCryptoServiceServer) GetAllCrypto(*GetAllCryptoRequest, CryptoService_GetAllCryptoServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetAllCrypto not implemented")
 }
 func (UnimplementedCryptoServiceServer) UpdateCrypto(context.Context, *UpdateCryptoRequest) (*UpdateCryptoResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateCrypto not implemented")
@@ -186,22 +209,25 @@ func _CryptoService_GetCrypto_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _CryptoService_GetAllCrypto_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetAllCryptoRequest)
-	if err := dec(in); err != nil {
-		return nil, err
+func _CryptoService_GetAllCrypto_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(GetAllCryptoRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
 	}
-	if interceptor == nil {
-		return srv.(CryptoServiceServer).GetAllCrypto(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/crypto.CryptoService/GetAllCrypto",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CryptoServiceServer).GetAllCrypto(ctx, req.(*GetAllCryptoRequest))
-	}
-	return interceptor(ctx, in, info, handler)
+	return srv.(CryptoServiceServer).GetAllCrypto(m, &cryptoServiceGetAllCryptoServer{stream})
+}
+
+type CryptoService_GetAllCryptoServer interface {
+	Send(*GetAllCryptoResponse) error
+	grpc.ServerStream
+}
+
+type cryptoServiceGetAllCryptoServer struct {
+	grpc.ServerStream
+}
+
+func (x *cryptoServiceGetAllCryptoServer) Send(m *GetAllCryptoResponse) error {
+	return x.ServerStream.SendMsg(m)
 }
 
 func _CryptoService_UpdateCrypto_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -292,10 +318,6 @@ var CryptoService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _CryptoService_GetCrypto_Handler,
 		},
 		{
-			MethodName: "GetAllCrypto",
-			Handler:    _CryptoService_GetAllCrypto_Handler,
-		},
-		{
 			MethodName: "UpdateCrypto",
 			Handler:    _CryptoService_UpdateCrypto_Handler,
 		},
@@ -312,6 +334,12 @@ var CryptoService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _CryptoService_AddDislike_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "GetAllCrypto",
+			Handler:       _CryptoService_GetAllCrypto_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "crypto.proto",
 }
