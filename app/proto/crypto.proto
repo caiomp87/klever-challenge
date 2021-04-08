@@ -1,0 +1,69 @@
+syntax="proto3";
+
+package crypto;
+
+option go_package = "app/pb";
+
+message Crypto {
+  string id = 1;
+  string name = 2;
+  int64 likes = 3;
+  int64 dislikes = 4;
+}
+
+message CreateCryptoRequest {
+  Crypto crypto = 1;
+}
+message CreateCryptoResponse {
+  Crypto crypto = 1;
+}
+
+message GetCryptoRequest {
+  string id = 1;
+}
+message GetCryptoResponse {
+  Crypto crypto = 1;
+}
+
+message GetAllCryptoRequest {}
+message GetAllCryptoResponse {
+  Crypto crypto = 1;
+}
+
+message UpdateCryptoRequest {
+  string id = 1;
+}
+message UpdateCryptoResponse {
+  Crypto crypto = 1;
+}
+
+message DeleteCryptoRequest {
+  string id = 1;
+}
+message DeleteCryptoResponse {
+  bool success = 1;
+}
+
+message AddLikeRequest {
+  string id = 1;
+}
+message AddLikeResponse {
+  Crypto crypto = 1;
+}
+
+message AddDislikeRequest {
+  string id = 1;
+}
+message AddDislikeResponse {
+  Crypto crypto = 1;
+}
+
+service CryptoService {
+  rpc CreateCrypto(CreateCryptoRequest) returns (CreateCryptoResponse);
+  rpc GetCrypto(GetCryptoRequest) returns (GetCryptoResponse);
+  rpc GetAllCrypto(GetAllCryptoRequest) returns (GetAllCryptoResponse);
+  rpc UpdateCrypto(UpdateCryptoRequest) returns (UpdateCryptoResponse);
+  rpc DeleteCrypto(DeleteCryptoRequest) returns (DeleteCryptoResponse);
+  rpc AddLike(AddLikeRequest) returns (AddLikeResponse);
+  rpc AddDislike(AddDislikeRequest) returns (AddDislikeResponse);
+}
