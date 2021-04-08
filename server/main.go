@@ -2,6 +2,7 @@ package main
 
 import (
 	"api/app/pb"
+	"api/config"
 	"api/controllers"
 	"api/db"
 	"context"
@@ -22,11 +23,16 @@ var cryptoDb *mongo.Collection
 var mongoCtx context.Context
 
 func main() {
-	fmt.Println("Start server on port :50051...")
-
-	listener, err := net.Listen("tcp", ":50051")
+	err := config.LoadEnv()
 	if err != nil {
-		log.Fatalf("Could not connect on port :50051: %s", err.Error())
+		log.Fatalf("Could not load environment variables: %s", err.Error())
+	}
+
+	var apiPort string = os.Getenv("API_PORT")
+
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%s", apiPort))
+	if err != nil {
+		log.Fatalf("Could not connect on port :%s: %s", apiPort, err.Error())
 	}
 
 	grpcServer := grpc.NewServer()
@@ -35,8 +41,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("Could not connect: %s", err.Error())
 	}
-
-	fmt.Println("Server listening on port :50051")
 
 	cryptoDb, mongoCtx, err = db.Connect()
 	if err != nil {
@@ -54,7 +58,8 @@ func main() {
 			log.Fatalf("Failed to serve: %v", err)
 		}
 	}()
-	fmt.Println("Server succesfully started on port :50051")
+
+	fmt.Printf("Server succesfully started on port :%s\n", apiPort)
 
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt)

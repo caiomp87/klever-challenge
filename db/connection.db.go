@@ -3,16 +3,23 @@ package db
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func Connect() (*mongo.Collection, context.Context, error) {
+	var dbName = os.Getenv("DB_NAME")
+	var dbCollection = os.Getenv("DB_COLLECTION")
+	var dbHost = os.Getenv("DB_HOST")
+	var dbPort = os.Getenv("DB_PORT")
+
 	fmt.Println("Connecting to MongoDB...")
 	mongoCtx := context.Background()
 
-	db, err := mongo.Connect(mongoCtx, options.Client().ApplyURI("mongodb://localhost:27017"))
+	connectionString := fmt.Sprintf("mongodb://%s:%s", dbHost, dbPort)
+	db, err := mongo.Connect(mongoCtx, options.Client().ApplyURI(connectionString))
 	if err != nil {
 		return nil, mongoCtx, err
 	}
@@ -22,8 +29,8 @@ func Connect() (*mongo.Collection, context.Context, error) {
 		return nil, mongoCtx, err
 	}
 
-	fmt.Println("Connected to MongoDB")
-	cryptoDb := db.Database("klever").Collection("cryptos")
+	fmt.Printf("Connected to MongoDB: %s\n", connectionString)
+	cryptoDb := db.Database(dbName).Collection(dbCollection)
 
 	return cryptoDb, mongoCtx, nil
 }
