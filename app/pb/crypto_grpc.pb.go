@@ -165,7 +165,7 @@ type CryptoServiceServer interface {
 	AddDislike(context.Context, *AddDislikeRequest) (*AddDislikeResponse, error)
 	RemoveDislike(context.Context, *RemoveDislikeRequest) (*RemoveDislikeResponse, error)
 	CountVotes(context.Context, *CountVotesRequest) (*CountVotesResponse, error)
-	// mustEmbedUnimplementedCryptoServiceServer()
+	mustEmbedUnimplementedCryptoServiceServer()
 }
 
 // UnimplementedCryptoServiceServer must be embedded to have forward compatible implementations.

@@ -19,6 +19,7 @@ import (
 type CryptoServiceServer struct {
 	Db  *mongo.Collection
 	Ctx context.Context
+	pb.UnimplementedCryptoServiceServer
 }
 
 func (s *CryptoServiceServer) CreateCrypto(ctx context.Context, req *pb.CreateCryptoRequest) (*pb.CreateCryptoResponse, error) {
