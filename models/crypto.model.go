@@ -1,6 +1,10 @@
 package models
 
-import "go.mongodb.org/mongo-driver/bson/primitive"
+import (
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 type CryptoItem struct {
 	Id          primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
@@ -8,4 +12,6 @@ type CryptoItem struct {
 	Description string             `bson:"description" json:"description"`
 	Likes       int                `bson:"likes" json:"likes"`
 	Dislikes    int                `bson:"dislikes" json:"dislikes"`
+	CreatedAt   time.Time          `bson:"createdAt" json:"createdAt"`
+	UpdatedAt   time.Time          `bson:"updatedAt" json:"updatedAt"`
 }

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -28,6 +29,8 @@ func (s *CryptoServiceServer) CreateCrypto(ctx context.Context, req *pb.CreateCr
 		Description: strings.Title(req.GetDescription()),
 		Likes:       0,
 		Dislikes:    0,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
 	}
 
 	result, err := s.Db.InsertOne(s.Ctx, data)
@@ -121,6 +124,7 @@ func (s *CryptoServiceServer) UpdateCrypto(ctx context.Context, req *pb.UpdateCr
 	update := bson.M{
 		"name":        strings.ToUpper(req.GetName()),
 		"description": strings.Title(req.GetDescription()),
+		"updatedAt":   time.Now(),
 	}
 	filter := bson.M{"_id": objectId}
 
@@ -178,7 +182,10 @@ func (s *CryptoServiceServer) AddLike(ctx context.Context, req *pb.AddLikeReques
 		)
 	}
 
-	update := bson.M{"likes": data.Likes + 1}
+	update := bson.M{
+		"likes":     data.Likes + 1,
+		"updatedAt": time.Now(),
+	}
 	filter := bson.M{"_id": objectId}
 
 	result = s.Db.FindOneAndUpdate(ctx, filter, bson.M{"$set": update}, options.FindOneAndUpdate().SetReturnDocument(1))
@@ -223,7 +230,10 @@ func (s *CryptoServiceServer) RemoveLike(ctx context.Context, req *pb.RemoveLike
 		likes = data.Likes - 1
 	}
 
-	update := bson.M{"likes": likes}
+	update := bson.M{
+		"likes":     likes,
+		"updatedAt": time.Now(),
+	}
 	filter := bson.M{"_id": objectId}
 
 	result = s.Db.FindOneAndUpdate(ctx, filter, bson.M{"$set": update}, options.FindOneAndUpdate().SetReturnDocument(1))
@@ -261,7 +271,10 @@ func (s *CryptoServiceServer) AddDislike(ctx context.Context, req *pb.AddDislike
 		)
 	}
 
-	update := bson.M{"dislikes": data.Dislikes + 1}
+	update := bson.M{
+		"dislikes":  data.Dislikes + 1,
+		"updatedAt": time.Now(),
+	}
 	filter := bson.M{"_id": objectId}
 
 	result = s.Db.FindOneAndUpdate(ctx, filter, bson.M{"$set": update}, options.FindOneAndUpdate().SetReturnDocument(1))
@@ -306,7 +319,10 @@ func (s *CryptoServiceServer) RemoveDislike(ctx context.Context, req *pb.RemoveD
 		dislikes = data.Dislikes - 1
 	}
 
-	update := bson.M{"dislikes": dislikes}
+	update := bson.M{
+		"dislikes":  dislikes,
+		"updatedAt": time.Now(),
+	}
 	filter := bson.M{"_id": objectId}
 
 	result = s.Db.FindOneAndUpdate(ctx, filter, bson.M{"$set": update}, options.FindOneAndUpdate().SetReturnDocument(1))
