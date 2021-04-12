@@ -9,12 +9,11 @@ import (
 	"strings"
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	bson "go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"gopkg.in/mgo.v2/bson"
 )
 
 type CryptoServiceServer struct {
@@ -41,7 +40,7 @@ func (s *CryptoServiceServer) CreateCrypto(ctx context.Context, req *pb.CreateCr
 		)
 	}
 
-	data.Id = result.InsertedID.(primitive.ObjectID)
+	data.Id = result.InsertedID.(bson.ObjectID)
 
 	return &pb.CreateCryptoResponse{
 		Success: true,
@@ -88,12 +87,13 @@ func (s *CryptoServiceServer) ListCryptos(req *pb.ListCryptosRequest, stream pb.
 }
 
 func (s *CryptoServiceServer) ReadCrypto(ctx context.Context, req *pb.ReadCryptoRequest) (*pb.ReadCryptoResponse, error) {
-	objectId, err := primitive.ObjectIDFromHex(req.GetId())
+	objectId, err := bson.ObjectIDFromHex(req.GetId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, fmt.Sprintf("Could not convert to ObjectId: %v", err))
 	}
 
 	result := s.Db.FindOne(ctx, bson.M{"_id": objectId})
+
 	data := models.CryptoItem{}
 	if err := result.Decode(&data); err != nil {
 		return nil, status.Errorf(codes.NotFound, fmt.Sprintf("Could not find crypto with Object Id %s: %v", req.GetId(), err))
@@ -113,7 +113,7 @@ func (s *CryptoServiceServer) ReadCrypto(ctx context.Context, req *pb.ReadCrypto
 }
 
 func (s *CryptoServiceServer) UpdateCrypto(ctx context.Context, req *pb.UpdateCryptoRequest) (*pb.UpdateCryptoResponse, error) {
-	objectId, err := primitive.ObjectIDFromHex(req.GetId())
+	objectId, err := bson.ObjectIDFromHex(req.GetId())
 	if err != nil {
 		return nil, status.Errorf(
 			codes.InvalidArgument,
@@ -151,7 +151,7 @@ func (s *CryptoServiceServer) UpdateCrypto(ctx context.Context, req *pb.UpdateCr
 }
 
 func (s *CryptoServiceServer) DeleteCrypto(ctx context.Context, req *pb.DeleteCryptoRequest) (*pb.DeleteCryptoResponse, error) {
-	objectId, err := primitive.ObjectIDFromHex(req.GetId())
+	objectId, err := bson.ObjectIDFromHex(req.GetId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, fmt.Sprintf("Could not convert to ObjectId: %v", err))
 	}
@@ -167,7 +167,7 @@ func (s *CryptoServiceServer) DeleteCrypto(ctx context.Context, req *pb.DeleteCr
 }
 
 func (s *CryptoServiceServer) AddLike(ctx context.Context, req *pb.AddLikeRequest) (*pb.AddLikeResponse, error) {
-	objectId, err := primitive.ObjectIDFromHex(req.GetId())
+	objectId, err := bson.ObjectIDFromHex(req.GetId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, fmt.Sprintf("Could not convert to ObjectId: %v", err))
 	}
@@ -208,7 +208,7 @@ func (s *CryptoServiceServer) AddLike(ctx context.Context, req *pb.AddLikeReques
 }
 
 func (s *CryptoServiceServer) RemoveLike(ctx context.Context, req *pb.RemoveLikeRequest) (*pb.RemoveLikeResponse, error) {
-	objectId, err := primitive.ObjectIDFromHex(req.GetId())
+	objectId, err := bson.ObjectIDFromHex(req.GetId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, fmt.Sprintf("Could not convert to ObjectId: %v", err))
 	}
@@ -256,7 +256,7 @@ func (s *CryptoServiceServer) RemoveLike(ctx context.Context, req *pb.RemoveLike
 }
 
 func (s *CryptoServiceServer) AddDislike(ctx context.Context, req *pb.AddDislikeRequest) (*pb.AddDislikeResponse, error) {
-	objectId, err := primitive.ObjectIDFromHex(req.GetId())
+	objectId, err := bson.ObjectIDFromHex(req.GetId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, fmt.Sprintf("Could not convert to ObjectId: %v", err))
 	}
@@ -297,7 +297,7 @@ func (s *CryptoServiceServer) AddDislike(ctx context.Context, req *pb.AddDislike
 }
 
 func (s *CryptoServiceServer) RemoveDislike(ctx context.Context, req *pb.RemoveDislikeRequest) (*pb.RemoveDislikeResponse, error) {
-	objectId, err := primitive.ObjectIDFromHex(req.GetId())
+	objectId, err := bson.ObjectIDFromHex(req.GetId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, fmt.Sprintf("Could not convert to ObjectId: %v", err))
 	}
@@ -345,7 +345,7 @@ func (s *CryptoServiceServer) RemoveDislike(ctx context.Context, req *pb.RemoveD
 }
 
 func (s *CryptoServiceServer) CountVotes(ctx context.Context, req *pb.CountVotesRequest) (*pb.CountVotesResponse, error) {
-	objectId, err := primitive.ObjectIDFromHex(req.GetId())
+	objectId, err := bson.ObjectIDFromHex(req.GetId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, fmt.Sprintf("Could not convert to ObjectId: %v", err))
 	}
