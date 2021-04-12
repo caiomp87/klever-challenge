@@ -17,19 +17,25 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-type CryptoServiceServer struct{}
-
+var apiPort string
 var cryptoDb *mongo.Collection
 var mongoCtx context.Context
 
-func main() {
+func init() {
 	err := config.LoadEnv()
 	if err != nil {
 		log.Fatalf("Could not load environment variables: %s", err.Error())
 	}
 
-	var apiPort string = os.Getenv("API_PORT")
+	apiPort = os.Getenv("API_PORT")
 
+	cryptoDb, mongoCtx, err = db.Connect()
+	if err != nil {
+		log.Fatalf("Could not connect to mongo database: %s", err.Error())
+	}
+}
+
+func main() {
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%s", apiPort))
 	if err != nil {
 		log.Fatalf("Could not connect on port :%s: %s", apiPort, err.Error())
@@ -37,15 +43,6 @@ func main() {
 
 	grpcServer := grpc.NewServer()
 	reflection.Register(grpcServer)
-
-	if err != nil {
-		log.Fatalf("Could not connect: %s", err.Error())
-	}
-
-	cryptoDb, mongoCtx, err = db.Connect()
-	if err != nil {
-		log.Fatalf("Could not connect to mongo database: %s", err.Error())
-	}
 
 	cryptoService := controllers.CryptoServiceServer{
 		Db:  cryptoDb,

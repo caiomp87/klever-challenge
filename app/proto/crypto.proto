@@ -31,6 +31,7 @@ message CreateCryptoRequest {
 }
 message CreateCryptoResponse {
   bool success = 1;
+  Crypto crypto = 2;
 }
 
 message ListCryptosRequest {}
@@ -52,6 +53,7 @@ message UpdateCryptoRequest {
 }
 message UpdateCryptoResponse {
   bool success = 1;
+  Crypto crypto = 2;
 }
 
 message DeleteCryptoRequest {

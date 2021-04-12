@@ -39,7 +39,15 @@ func (s *CryptoServiceServer) CreateCrypto(ctx context.Context, req *pb.CreateCr
 
 	data.Id = result.InsertedID.(primitive.ObjectID)
 
-	return &pb.CreateCryptoResponse{Success: true}, nil
+	return &pb.CreateCryptoResponse{
+		Success: true,
+		Crypto: &pb.Crypto{
+			Name:        data.Name,
+			Description: data.Description,
+			Likes:       strconv.Itoa(data.Likes),
+			Dislikes:    strconv.Itoa(data.Dislikes),
+		},
+	}, nil
 }
 
 func (s *CryptoServiceServer) ListCryptos(req *pb.ListCryptosRequest, stream pb.CryptoService_ListCryptosServer) error {
@@ -128,6 +136,12 @@ func (s *CryptoServiceServer) UpdateCrypto(ctx context.Context, req *pb.UpdateCr
 
 	return &pb.UpdateCryptoResponse{
 		Success: true,
+		Crypto: &pb.Crypto{
+			Name:        data.Name,
+			Description: data.Description,
+			Likes:       strconv.Itoa(data.Likes),
+			Dislikes:    strconv.Itoa(data.Dislikes),
+		},
 	}, nil
 }
 
