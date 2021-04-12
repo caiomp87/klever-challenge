@@ -17,9 +17,11 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-var apiPort string
-var cryptoDb *mongo.Collection
-var mongoCtx context.Context
+var (
+	apiPort  string
+	cryptoDb *mongo.Collection
+	mongoCtx context.Context
+)
 
 func init() {
 	err := config.LoadEnv()
