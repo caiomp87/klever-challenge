@@ -54,8 +54,6 @@ func (s *CryptoServiceServer) CreateCrypto(ctx context.Context, req *pb.CreateCr
 }
 
 func (s *CryptoServiceServer) ListCryptos(req *pb.ListCryptosRequest, stream pb.CryptoService_ListCryptosServer) error {
-	data := &models.CryptoItem{}
-
 	cursor, err := s.Db.Find(context.Background(), bson.M{})
 	if err != nil {
 		return status.Errorf(codes.Internal, fmt.Sprintf("Unknown internal error: %v", err))
@@ -63,8 +61,9 @@ func (s *CryptoServiceServer) ListCryptos(req *pb.ListCryptosRequest, stream pb.
 
 	defer cursor.Close(context.Background())
 
+	var data models.CryptoItem
 	for cursor.Next(context.Background()) {
-		err := cursor.Decode(data)
+		err := cursor.Decode(&data)
 		if err != nil {
 			return status.Errorf(codes.Unavailable, fmt.Sprintf("Could not decode data: %v", err))
 		}
@@ -94,7 +93,7 @@ func (s *CryptoServiceServer) ReadCrypto(ctx context.Context, req *pb.ReadCrypto
 
 	result := s.Db.FindOne(ctx, bson.M{"_id": objectId})
 
-	data := models.CryptoItem{}
+	var data models.CryptoItem
 	if err := result.Decode(&data); err != nil {
 		return nil, status.Errorf(codes.NotFound, fmt.Sprintf("Could not find crypto with Object Id %s: %v", req.GetId(), err))
 	}
@@ -130,7 +129,7 @@ func (s *CryptoServiceServer) UpdateCrypto(ctx context.Context, req *pb.UpdateCr
 
 	result := s.Db.FindOneAndUpdate(ctx, filter, bson.M{"$set": update}, options.FindOneAndUpdate().SetReturnDocument(1))
 
-	data := models.CryptoItem{}
+	var data models.CryptoItem
 	err = result.Decode(&data)
 	if err != nil {
 		return nil, status.Errorf(
@@ -172,7 +171,7 @@ func (s *CryptoServiceServer) AddLike(ctx context.Context, req *pb.AddLikeReques
 		return nil, status.Errorf(codes.InvalidArgument, fmt.Sprintf("Could not convert to ObjectId: %v", err))
 	}
 
-	data := models.CryptoItem{}
+	var data models.CryptoItem
 	result := s.Db.FindOne(ctx, bson.M{"_id": objectId})
 	err = result.Decode(&data)
 	if err != nil {
@@ -213,7 +212,7 @@ func (s *CryptoServiceServer) RemoveLike(ctx context.Context, req *pb.RemoveLike
 		return nil, status.Errorf(codes.InvalidArgument, fmt.Sprintf("Could not convert to ObjectId: %v", err))
 	}
 
-	data := models.CryptoItem{}
+	var data models.CryptoItem
 	result := s.Db.FindOne(ctx, bson.M{"_id": objectId})
 	err = result.Decode(&data)
 	if err != nil {
@@ -261,7 +260,7 @@ func (s *CryptoServiceServer) AddDislike(ctx context.Context, req *pb.AddDislike
 		return nil, status.Errorf(codes.InvalidArgument, fmt.Sprintf("Could not convert to ObjectId: %v", err))
 	}
 
-	data := models.CryptoItem{}
+	var data models.CryptoItem
 	result := s.Db.FindOne(ctx, bson.M{"_id": objectId})
 	err = result.Decode(&data)
 	if err != nil {
@@ -302,7 +301,7 @@ func (s *CryptoServiceServer) RemoveDislike(ctx context.Context, req *pb.RemoveD
 		return nil, status.Errorf(codes.InvalidArgument, fmt.Sprintf("Could not convert to ObjectId: %v", err))
 	}
 
-	data := models.CryptoItem{}
+	var data models.CryptoItem
 	result := s.Db.FindOne(ctx, bson.M{"_id": objectId})
 	err = result.Decode(&data)
 	if err != nil {
@@ -352,7 +351,7 @@ func (s *CryptoServiceServer) CountVotes(ctx context.Context, req *pb.CountVotes
 
 	var total int
 
-	data := models.CryptoItem{}
+	var data models.CryptoItem
 	result := s.Db.FindOne(ctx, bson.M{"_id": objectId})
 	err = result.Decode(&data)
 	if err != nil {
@@ -368,4 +367,40 @@ func (s *CryptoServiceServer) CountVotes(ctx context.Context, req *pb.CountVotes
 		Name:  data.Name,
 		Total: strconv.Itoa(total),
 	}, nil
+}
+
+func (s *CryptoServiceServer) FilterByName(req *pb.FilterByNameRequest, stream pb.CryptoService_FilterByNameServer) error {
+	name := req.GetName()
+
+	filter := bson.M{"name": &bson.Regex{Pattern: name, Options: "i"}}
+
+	cursor, err := s.Db.Find(context.Background(), filter)
+	if err != nil {
+		return status.Errorf(codes.Internal, fmt.Sprintf("Unknown internal error: %v", err))
+	}
+
+	defer cursor.Close(context.Background())
+
+	var data models.CryptoItem
+	for cursor.Next(context.Background()) {
+		err := cursor.Decode(&data)
+		if err != nil {
+			return status.Errorf(codes.Unavailable, fmt.Sprintf("Could not decode data: %v", err))
+		}
+
+		stream.Send(&pb.FilterByNameResponse{
+			Crypto: &pb.Crypto{
+				Id:          data.Id.Hex(),
+				Name:        data.Name,
+				Description: data.Description,
+				Likes:       strconv.Itoa(data.Likes),
+				Dislikes:    strconv.Itoa(data.Dislikes),
+			},
+		})
+	}
+
+	if err := cursor.Err(); err != nil {
+		return status.Errorf(codes.Internal, fmt.Sprintf("Unkown cursor error: %v", err))
+	}
+	return nil
 }
