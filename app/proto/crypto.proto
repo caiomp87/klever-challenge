@@ -15,7 +15,7 @@ service CryptoService {
   rpc AddDislike(AddDislikeRequest) returns (AddDislikeResponse);
   rpc RemoveDislike(RemoveDislikeRequest) returns (RemoveDislikeResponse);
   rpc CountVotes(CountVotesRequest) returns (CountVotesResponse);
-  rpc FilterByName(FilterByNameRequest) returns (stream FilterByNameResponse);
+  rpc FilterByName(FilterByNameRequest) returns (FilterByNameResponse);
 }
 
 message Crypto {

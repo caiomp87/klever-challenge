@@ -54,15 +54,15 @@ func (s *CryptoServiceServer) CreateCrypto(ctx context.Context, req *pb.CreateCr
 }
 
 func (s *CryptoServiceServer) ListCryptos(req *pb.ListCryptosRequest, stream pb.CryptoService_ListCryptosServer) error {
-	cursor, err := s.Db.Find(context.Background(), bson.M{})
+	cursor, err := s.Db.Find(s.Ctx, bson.M{}, options.Find().SetSort(bson.M{"likes": -1}))
 	if err != nil {
 		return status.Errorf(codes.Internal, fmt.Sprintf("Unknown internal error: %v", err))
 	}
 
-	defer cursor.Close(context.Background())
+	defer cursor.Close(s.Ctx)
 
 	var data models.CryptoItem
-	for cursor.Next(context.Background()) {
+	for cursor.Next(s.Ctx) {
 		err := cursor.Decode(&data)
 		if err != nil {
 			return status.Errorf(codes.Unavailable, fmt.Sprintf("Could not decode data: %v", err))
@@ -369,38 +369,25 @@ func (s *CryptoServiceServer) CountVotes(ctx context.Context, req *pb.CountVotes
 	}, nil
 }
 
-func (s *CryptoServiceServer) FilterByName(req *pb.FilterByNameRequest, stream pb.CryptoService_FilterByNameServer) error {
+func (s *CryptoServiceServer) FilterByName(ctx context.Context, req *pb.FilterByNameRequest) (*pb.FilterByNameResponse, error) {
 	name := req.GetName()
 
 	filter := bson.M{"name": &bson.Regex{Pattern: name, Options: "i"}}
 
-	cursor, err := s.Db.Find(context.Background(), filter)
-	if err != nil {
-		return status.Errorf(codes.Internal, fmt.Sprintf("Unknown internal error: %v", err))
-	}
-
-	defer cursor.Close(context.Background())
-
 	var data models.CryptoItem
-	for cursor.Next(context.Background()) {
-		err := cursor.Decode(&data)
-		if err != nil {
-			return status.Errorf(codes.Unavailable, fmt.Sprintf("Could not decode data: %v", err))
-		}
-
-		stream.Send(&pb.FilterByNameResponse{
-			Crypto: &pb.Crypto{
-				Id:          data.Id.Hex(),
-				Name:        data.Name,
-				Description: data.Description,
-				Likes:       strconv.Itoa(data.Likes),
-				Dislikes:    strconv.Itoa(data.Dislikes),
-			},
-		})
+	result := s.Db.FindOne(s.Ctx, filter)
+	err := result.Decode(&data)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, fmt.Sprintf("Could not find crypto with Name %s: %v", name, err))
 	}
 
-	if err := cursor.Err(); err != nil {
-		return status.Errorf(codes.Internal, fmt.Sprintf("Unkown cursor error: %v", err))
-	}
-	return nil
+	return &pb.FilterByNameResponse{
+		Crypto: &pb.Crypto{
+			Id:          data.Id.Hex(),
+			Name:        data.Name,
+			Description: data.Description,
+			Likes:       strconv.Itoa(data.Likes),
+			Dislikes:    strconv.Itoa(data.Dislikes),
+		},
+	}, nil
 }

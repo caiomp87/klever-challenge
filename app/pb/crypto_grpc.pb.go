@@ -28,7 +28,7 @@ type CryptoServiceClient interface {
 	AddDislike(ctx context.Context, in *AddDislikeRequest, opts ...grpc.CallOption) (*AddDislikeResponse, error)
 	RemoveDislike(ctx context.Context, in *RemoveDislikeRequest, opts ...grpc.CallOption) (*RemoveDislikeResponse, error)
 	CountVotes(ctx context.Context, in *CountVotesRequest, opts ...grpc.CallOption) (*CountVotesResponse, error)
-	FilterByName(ctx context.Context, in *FilterByNameRequest, opts ...grpc.CallOption) (CryptoService_FilterByNameClient, error)
+	FilterByName(ctx context.Context, in *FilterByNameRequest, opts ...grpc.CallOption) (*FilterByNameResponse, error)
 }
 
 type cryptoServiceClient struct {
@@ -152,36 +152,13 @@ func (c *cryptoServiceClient) CountVotes(ctx context.Context, in *CountVotesRequ
 	return out, nil
 }
 
-func (c *cryptoServiceClient) FilterByName(ctx context.Context, in *FilterByNameRequest, opts ...grpc.CallOption) (CryptoService_FilterByNameClient, error) {
-	stream, err := c.cc.NewStream(ctx, &CryptoService_ServiceDesc.Streams[1], "/crypto.CryptoService/FilterByName", opts...)
+func (c *cryptoServiceClient) FilterByName(ctx context.Context, in *FilterByNameRequest, opts ...grpc.CallOption) (*FilterByNameResponse, error) {
+	out := new(FilterByNameResponse)
+	err := c.cc.Invoke(ctx, "/crypto.CryptoService/FilterByName", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &cryptoServiceFilterByNameClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
-}
-
-type CryptoService_FilterByNameClient interface {
-	Recv() (*FilterByNameResponse, error)
-	grpc.ClientStream
-}
-
-type cryptoServiceFilterByNameClient struct {
-	grpc.ClientStream
-}
-
-func (x *cryptoServiceFilterByNameClient) Recv() (*FilterByNameResponse, error) {
-	m := new(FilterByNameResponse)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
+	return out, nil
 }
 
 // CryptoServiceServer is the server API for CryptoService service.
@@ -198,7 +175,7 @@ type CryptoServiceServer interface {
 	AddDislike(context.Context, *AddDislikeRequest) (*AddDislikeResponse, error)
 	RemoveDislike(context.Context, *RemoveDislikeRequest) (*RemoveDislikeResponse, error)
 	CountVotes(context.Context, *CountVotesRequest) (*CountVotesResponse, error)
-	FilterByName(*FilterByNameRequest, CryptoService_FilterByNameServer) error
+	FilterByName(context.Context, *FilterByNameRequest) (*FilterByNameResponse, error)
 	mustEmbedUnimplementedCryptoServiceServer()
 }
 
@@ -236,8 +213,8 @@ func (UnimplementedCryptoServiceServer) RemoveDislike(context.Context, *RemoveDi
 func (UnimplementedCryptoServiceServer) CountVotes(context.Context, *CountVotesRequest) (*CountVotesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CountVotes not implemented")
 }
-func (UnimplementedCryptoServiceServer) FilterByName(*FilterByNameRequest, CryptoService_FilterByNameServer) error {
-	return status.Errorf(codes.Unimplemented, "method FilterByName not implemented")
+func (UnimplementedCryptoServiceServer) FilterByName(context.Context, *FilterByNameRequest) (*FilterByNameResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FilterByName not implemented")
 }
 func (UnimplementedCryptoServiceServer) mustEmbedUnimplementedCryptoServiceServer() {}
 
@@ -435,25 +412,22 @@ func _CryptoService_CountVotes_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
-func _CryptoService_FilterByName_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(FilterByNameRequest)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
+func _CryptoService_FilterByName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FilterByNameRequest)
+	if err := dec(in); err != nil {
+		return nil, err
 	}
-	return srv.(CryptoServiceServer).FilterByName(m, &cryptoServiceFilterByNameServer{stream})
-}
-
-type CryptoService_FilterByNameServer interface {
-	Send(*FilterByNameResponse) error
-	grpc.ServerStream
-}
-
-type cryptoServiceFilterByNameServer struct {
-	grpc.ServerStream
-}
-
-func (x *cryptoServiceFilterByNameServer) Send(m *FilterByNameResponse) error {
-	return x.ServerStream.SendMsg(m)
+	if interceptor == nil {
+		return srv.(CryptoServiceServer).FilterByName(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/crypto.CryptoService/FilterByName",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CryptoServiceServer).FilterByName(ctx, req.(*FilterByNameRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 // CryptoService_ServiceDesc is the grpc.ServiceDesc for CryptoService service.
@@ -499,16 +473,15 @@ var CryptoService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "CountVotes",
 			Handler:    _CryptoService_CountVotes_Handler,
 		},
+		{
+			MethodName: "FilterByName",
+			Handler:    _CryptoService_FilterByName_Handler,
+		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "ListCryptos",
 			Handler:       _CryptoService_ListCryptos_Handler,
-			ServerStreams: true,
-		},
-		{
-			StreamName:    "FilterByName",
-			Handler:       _CryptoService_FilterByName_Handler,
 			ServerStreams: true,
 		},
 	},
