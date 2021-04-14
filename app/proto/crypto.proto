@@ -15,15 +15,15 @@ service CryptoService {
   rpc AddDislike(AddDislikeRequest) returns (AddDislikeResponse);
   rpc RemoveDislike(RemoveDislikeRequest) returns (RemoveDislikeResponse);
   rpc CountVotes(CountVotesRequest) returns (CountVotesResponse);
-  rpc FilterByName(FilterByNameRequest) returns (FilterByNameResponse);
+  rpc FilterByName(FilterByNameRequest) returns (stream Crypto);
 }
 
 message Crypto {
   string id = 1;
   string name = 2;
   string description = 3;
-  string likes = 4;
-  string dislikes = 5;
+  int64 likes = 4;
+  int64 dislikes = 5;
 }
 
 message CreateCryptoRequest {
@@ -97,7 +97,7 @@ message CountVotesRequest {
 }
 message CountVotesResponse {
   string name = 1;
-  string total = 2;
+  int64 total = 2;
 }
 
 message FilterByNameRequest {

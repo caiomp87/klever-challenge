@@ -5,7 +5,6 @@ import (
 	"api/models"
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
@@ -47,14 +46,14 @@ func (s *CryptoServiceServer) CreateCrypto(ctx context.Context, req *pb.CreateCr
 		Crypto: &pb.Crypto{
 			Name:        data.Name,
 			Description: data.Description,
-			Likes:       strconv.Itoa(data.Likes),
-			Dislikes:    strconv.Itoa(data.Dislikes),
+			Likes:       data.Likes,
+			Dislikes:    data.Dislikes,
 		},
 	}, nil
 }
 
 func (s *CryptoServiceServer) ListCryptos(req *pb.ListCryptosRequest, stream pb.CryptoService_ListCryptosServer) error {
-	cursor, err := s.Db.Find(s.Ctx, bson.M{}, options.Find().SetSort(bson.M{"likes": -1}))
+	cursor, err := s.Db.Find(s.Ctx, bson.M{}, options.Find().SetSort(bson.M{"voteRate": -1}))
 	if err != nil {
 		return status.Errorf(codes.Internal, fmt.Sprintf("Unknown internal error: %v", err))
 	}
@@ -73,8 +72,8 @@ func (s *CryptoServiceServer) ListCryptos(req *pb.ListCryptosRequest, stream pb.
 				Id:          data.Id.Hex(),
 				Name:        data.Name,
 				Description: data.Description,
-				Likes:       strconv.Itoa(data.Likes),
-				Dislikes:    strconv.Itoa(data.Dislikes),
+				Likes:       data.Likes,
+				Dislikes:    data.Dislikes,
 			},
 		})
 	}
@@ -103,8 +102,8 @@ func (s *CryptoServiceServer) ReadCrypto(ctx context.Context, req *pb.ReadCrypto
 			Id:          objectId.Hex(),
 			Name:        data.Name,
 			Description: data.Description,
-			Likes:       strconv.Itoa(data.Likes),
-			Dislikes:    strconv.Itoa(data.Dislikes),
+			Likes:       data.Likes,
+			Dislikes:    data.Dislikes,
 		},
 	}
 
@@ -143,8 +142,8 @@ func (s *CryptoServiceServer) UpdateCrypto(ctx context.Context, req *pb.UpdateCr
 		Crypto: &pb.Crypto{
 			Name:        data.Name,
 			Description: data.Description,
-			Likes:       strconv.Itoa(data.Likes),
-			Dislikes:    strconv.Itoa(data.Dislikes),
+			Likes:       data.Likes,
+			Dislikes:    data.Dislikes,
 		},
 	}, nil
 }
@@ -183,6 +182,7 @@ func (s *CryptoServiceServer) AddLike(ctx context.Context, req *pb.AddLikeReques
 
 	update := bson.M{
 		"likes":     data.Likes + 1,
+		"voteRate":  (data.Likes + 1) - data.Dislikes,
 		"updatedAt": time.Now(),
 	}
 	filter := bson.M{"_id": objectId}
@@ -200,8 +200,8 @@ func (s *CryptoServiceServer) AddLike(ctx context.Context, req *pb.AddLikeReques
 		Crypto: &pb.Crypto{
 			Id:       data.Id.Hex(),
 			Name:     data.Name,
-			Likes:    strconv.Itoa(data.Likes),
-			Dislikes: strconv.Itoa(data.Dislikes),
+			Likes:    data.Likes,
+			Dislikes: data.Dislikes,
 		},
 	}, nil
 }
@@ -222,7 +222,7 @@ func (s *CryptoServiceServer) RemoveLike(ctx context.Context, req *pb.RemoveLike
 		)
 	}
 
-	var likes int
+	var likes int64
 	if data.Likes-1 < 0 {
 		likes = 0
 	} else {
@@ -231,6 +231,7 @@ func (s *CryptoServiceServer) RemoveLike(ctx context.Context, req *pb.RemoveLike
 
 	update := bson.M{
 		"likes":     likes,
+		"voteRate":  likes - data.Dislikes,
 		"updatedAt": time.Now(),
 	}
 	filter := bson.M{"_id": objectId}
@@ -248,8 +249,8 @@ func (s *CryptoServiceServer) RemoveLike(ctx context.Context, req *pb.RemoveLike
 		Crypto: &pb.Crypto{
 			Id:       data.Id.Hex(),
 			Name:     data.Name,
-			Likes:    strconv.Itoa(data.Likes),
-			Dislikes: strconv.Itoa(data.Dislikes),
+			Likes:    data.Likes,
+			Dislikes: data.Dislikes,
 		},
 	}, nil
 }
@@ -272,6 +273,7 @@ func (s *CryptoServiceServer) AddDislike(ctx context.Context, req *pb.AddDislike
 
 	update := bson.M{
 		"dislikes":  data.Dislikes + 1,
+		"voteRate":  data.Likes - (data.Dislikes + 1),
 		"updatedAt": time.Now(),
 	}
 	filter := bson.M{"_id": objectId}
@@ -289,8 +291,8 @@ func (s *CryptoServiceServer) AddDislike(ctx context.Context, req *pb.AddDislike
 		Crypto: &pb.Crypto{
 			Id:       data.Id.Hex(),
 			Name:     data.Name,
-			Likes:    strconv.Itoa(data.Likes),
-			Dislikes: strconv.Itoa(data.Dislikes),
+			Likes:    data.Likes,
+			Dislikes: data.Dislikes,
 		},
 	}, nil
 }
@@ -311,7 +313,7 @@ func (s *CryptoServiceServer) RemoveDislike(ctx context.Context, req *pb.RemoveD
 		)
 	}
 
-	var dislikes int
+	var dislikes int64
 	if data.Dislikes-1 < 0 {
 		dislikes = 0
 	} else {
@@ -320,6 +322,7 @@ func (s *CryptoServiceServer) RemoveDislike(ctx context.Context, req *pb.RemoveD
 
 	update := bson.M{
 		"dislikes":  dislikes,
+		"voteRate":  data.Likes - dislikes,
 		"updatedAt": time.Now(),
 	}
 	filter := bson.M{"_id": objectId}
@@ -337,8 +340,8 @@ func (s *CryptoServiceServer) RemoveDislike(ctx context.Context, req *pb.RemoveD
 		Crypto: &pb.Crypto{
 			Id:       data.Id.Hex(),
 			Name:     data.Name,
-			Likes:    strconv.Itoa(data.Likes),
-			Dislikes: strconv.Itoa(data.Dislikes),
+			Likes:    data.Likes,
+			Dislikes: data.Dislikes,
 		},
 	}, nil
 }
@@ -349,7 +352,7 @@ func (s *CryptoServiceServer) CountVotes(ctx context.Context, req *pb.CountVotes
 		return nil, status.Errorf(codes.InvalidArgument, fmt.Sprintf("Could not convert to ObjectId: %v", err))
 	}
 
-	var total int
+	var total int64
 
 	var data models.CryptoItem
 	result := s.Db.FindOne(ctx, bson.M{"_id": objectId})
@@ -365,29 +368,39 @@ func (s *CryptoServiceServer) CountVotes(ctx context.Context, req *pb.CountVotes
 
 	return &pb.CountVotesResponse{
 		Name:  data.Name,
-		Total: strconv.Itoa(total),
+		Total: total,
 	}, nil
 }
 
-func (s *CryptoServiceServer) FilterByName(ctx context.Context, req *pb.FilterByNameRequest) (*pb.FilterByNameResponse, error) {
-	name := req.GetName()
-
-	filter := bson.M{"name": &bson.Regex{Pattern: name, Options: "i"}}
-
-	var data models.CryptoItem
-	result := s.Db.FindOne(s.Ctx, filter)
-	err := result.Decode(&data)
+func (s *CryptoServiceServer) FilterByName(req *pb.FilterByNameRequest, stream pb.CryptoService_FilterByNameServer) error {
+	cursor, err := s.Db.Find(s.Ctx, bson.M{"name": bson.Regex{Pattern: req.GetName(), Options: "i"}}, options.Find().SetSort(bson.M{"likes": -1}))
 	if err != nil {
-		return nil, status.Errorf(codes.NotFound, fmt.Sprintf("Could not find crypto with Name %s: %v", name, err))
+		return status.Errorf(codes.Internal, fmt.Sprintf("Unknown internal error: %v", err))
 	}
 
-	return &pb.FilterByNameResponse{
-		Crypto: &pb.Crypto{
-			Id:          data.Id.Hex(),
-			Name:        data.Name,
-			Description: data.Description,
-			Likes:       strconv.Itoa(data.Likes),
-			Dislikes:    strconv.Itoa(data.Dislikes),
-		},
-	}, nil
+	defer cursor.Close(s.Ctx)
+
+	var data models.CryptoItem
+	for cursor.Next(s.Ctx) {
+		err := cursor.Decode(&data)
+		if err != nil {
+			return status.Errorf(codes.Unavailable, fmt.Sprintf("Could not decode data: %v", err))
+		}
+
+		stream.Send(
+			&pb.Crypto{
+				Id:          data.Id.Hex(),
+				Name:        data.Name,
+				Description: data.Description,
+				Likes:       data.Likes,
+				Dislikes:    data.Dislikes,
+			},
+		)
+	}
+
+	if err := cursor.Err(); err != nil {
+		return status.Errorf(codes.Internal, fmt.Sprintf("Unkown cursor error: %v", err))
+	}
+
+	return nil
 }
